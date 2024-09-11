@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Memory Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://thumbs.dreamstime.com/b/falling-numbers-digits-beautiful-background-design-wallpaper-falling-numbers-digits-beautiful-background-design-wallpaper-119010647.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: rgba(58, 57, 57, 0.8);
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+            width: 300px;
+            height: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .game {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game h1 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .memory-board {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            width: 60px;
+            height: 60px;
+            background-color: #ffe100;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            background-color: #333;
+            color: #ffe100;
+        }
+
+        .message {
+            font-size: 16px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ffe100;
+            color: #333;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background-color: #e2b607;
+        }
+
+        .level-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .level-buttons button {
+            flex: 1;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            color: #e2b607;
+        }
+
+        .back-button i {
+            font-size: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 90%;
+                height: auto;
+            }
+            .card {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="choosing.html" class="back-button"><i class="fas fa-arrow-left"></i></a>
+<div class="container">
+
+    <div class="game">
+        <h1>Memory Game</h1>
+        <div class="level-buttons">
+            <button class="button" onclick="startNewGame('basic')">Basic</button>
+            <button class="button" onclick="startNewGame('medium')">Medium</button>
+            <button class="button" onclick="startNewGame('hard')">Hard</button>
+        </div>
+        <div class="memory-board" id="memoryBoard"></div>
+        <div class="message" id="message">Select a level to start the game!</div>
+        <button class="button" id="restartButton" style="display: none;" onclick="startNewGame(currentLevel)">Start New Game</button>
+    </div>
+</div>
+
+<script>
+    let boardSize = 3;
+    let currentLevel = 'medium';  // Store current level for restart button
+    const cards = [];
+    let firstCard = null;
+    let secondCard = null;
+    let matchesFound = 0;
+    let gameOver = false;
+
+    function startNewGame(level) {
+        currentLevel = level;  // Set the current level
+        const board = document.getElementById('memoryBoard');
+        board.innerHTML = '';
+        cards.length = 0;
+
+        if (level === 'basic') {
+            boardSize = 3; // 3x3 grid for 9 cards
+            const pairs = [1, 2, 3, 4]; // 4 pairs
+            pairs.forEach(num => {
+                cards.push(num, num);
+            });
+            cards.push(5); // Single card
+        } else if (level === 'medium') {
+            boardSize = 4; // 4x3 grid for 12 cards
+            for (let i = 1; i <= 6; i++) {
+                cards.push(i, i); // 6 pairs
+            }
+        } else if (level === 'hard') {
+            boardSize = 4; // 4x4 grid for 16 cards
+            for (let i = 1; i <= 8; i++) {
+                cards.push(i, i); // 8 pairs
+            }
+        }
+
+        cards.sort(() => Math.random() - 0.5);
+
+        board.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+
+        cards.forEach((card) => {
+            const cardElement = document.createElement('button');
+            cardElement.className = 'card';
+            cardElement.dataset.value = card;
+            cardElement.addEventListener('click', handleCardClick);
+            board.appendChild(cardElement);
+        });
+
+        document.getElementById('message').textContent = 'Find all matching pairs!';
+        document.getElementById('restartButton').style.display = 'none'; // Hide the restart button
+        gameOver = false;
+        matchesFound = 0;
+    }
+
+    function handleCardClick(event) {
+        if (gameOver || event.target.classList.contains('flipped') || event.target === firstCard) {
+            return;
+        }
+
+        event.target.textContent = event.target.dataset.value;
+        event.target.classList.add('flipped');
+
+        if (!firstCard) {
+            firstCard = event.target;
+        } else {
+            secondCard = event.target;
+            if (firstCard.dataset.value === secondCard.dataset.value) {
+                matchesFound++;
+                if (matchesFound === Math.floor((boardSize * boardSize) / 2)) {
+                    document.getElementById('message').textContent = 'Congratulations! You found all pairs!';
+                    document.getElementById('restartButton').style.display = 'block'; // Show the restart button for all levels
+                    gameOver = true;
+                }
+                firstCard = null;
+                secondCard = null;
+            } else {
+                setTimeout(() => {
+                    firstCard.textContent = '';
+                    secondCard.textContent = '';
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    firstCard = null;
+                    secondCard = null;
+                }, 1000);
+            }
+        }
+    }
+
+    // Start a new game on page load with default level
+    startNewGame('basic');
+</script>
+
+</body>
+</html>

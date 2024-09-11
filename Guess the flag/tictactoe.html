@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://media.istockphoto.com/id/1292919739/vector/tic-tac-toe-school-game-colorful-seamless-pattern-for-fabric-and-print-on-the-paper.jpg?s=612x612&w=0&k=20&c=Q4gMspKHffPmhKuofb_Rb_WCD8uAgbsbXSKuWEcziM8=');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            background: rgba(58, 57, 57, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            justify-content: center;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #ffe100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background-color: #e2b607;
+        }
+        .player-input {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .player-input input {
+            width: 40%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        .message {
+            color: #fff;
+            margin-top: 20px;
+        }
+        .play-again-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #6c757d;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: none;
+        }
+        .play-again-button:hover {
+            background-color: #5a6268;
+        }
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            color: #e2b607;
+        }
+        .back-button i {
+            font-size: 24px;
+        }
+        .mode-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .mode-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #000000;
+            background-color: #e2b607;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .mode-button:hover {
+            background-color: #e2b607;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<a href="choosing.html" class="back-button"><i class="fas fa-arrow-left"></i></a>
+
+<div class="container">
+    <h1>Tic Tac Toe</h1>
+    <div class="player-input">
+        <input type="text" id="player1" placeholder="Player 1 Name" value="Player 1">
+        <input type="text" id="player2" placeholder="Player 2 Name" value="Player 2" disabled>
+    </div>
+    <div class="grid" id="grid">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <p class="message" id="message"></p>
+    <button class="play-again-button" id="playAgainButton">Play Again</button>
+
+    <div class="mode-buttons">
+        <button class="mode-button" id="onePlayerButton">1 Player</button>
+        <button class="mode-button" id="twoPlayerButton">2 Players</button>
+    </div>
+</div>
+
+<script>
+    const grid = document.getElementById('grid');
+    const message = document.getElementById('message');
+    const playAgainButton = document.getElementById('playAgainButton');
+    const onePlayerButton = document.getElementById('onePlayerButton');
+    const twoPlayerButton = document.getElementById('twoPlayerButton');
+    let currentPlayer = 'X';
+    let board = Array(9).fill(null);
+    let gameEnded = false;
+    let isSinglePlayer = false;
+
+    const winningCombinations = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
+
+    function getPlayerName(symbol) {
+        const player1Name = document.getElementById('player1').value || 'Player 1';
+        const player2Name = document.getElementById('player2').value || 'Player 2';
+        return symbol === 'X' ? player1Name : player2Name;
+    }
+
+    function checkWinner() {
+        for (const combination of winningCombinations) {
+            const [a, b, c] = combination;
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                return board[a];
+            }
+        }
+        return board.includes(null) ? null : 'Draw';
+    }
+
+    function computerMove() {
+        let availableCells = board.map((value, index) => value === null ? index : null).filter(index => index !== null);
+        let randomIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
+        board[randomIndex] = 'O';
+        document.querySelector(`[data-index="${randomIndex}"]`).textContent = 'O';
+        currentPlayer = 'X';
+    }
+
+    function handleClick(event) {
+        if (gameEnded) return;
+
+        const index = event.target.getAttribute('data-index');
+        if (board[index] || checkWinner()) return;
+
+        board[index] = currentPlayer;
+        event.target.textContent = currentPlayer;
+        const winner = checkWinner();
+
+        if (winner) {
+            if (winner === 'Draw') {
+                message.textContent = 'It\'s a draw!';
+            } else {
+                message.textContent = `${getPlayerName(winner)} wins!`;
+            }
+            gameEnded = true;
+            playAgainButton.style.display = 'block';
+        } else {
+            if (isSinglePlayer && currentPlayer === 'X') {
+                currentPlayer = 'O';
+                setTimeout(computerMove, 500);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            }
+        }
+    }
+
+    function resetGame() {
+        board.fill(null);
+        currentPlayer = 'X';
+        Array.from(document.getElementsByClassName('cell')).forEach(cell => {
+            cell.textContent = '';
+        });
+        message.textContent = '';
+        gameEnded = false;
+        playAgainButton.style.display = 'none';
+    }
+
+    onePlayerButton.addEventListener('click', () => {
+        isSinglePlayer = true;
+        document.getElementById('player2').value = 'Computer';
+        document.getElementById('player2').disabled = true;
+        resetGame();
+    });
+
+    twoPlayerButton.addEventListener('click', () => {
+        isSinglePlayer = false;
+        document.getElementById('player2').value = 'Player 2';
+        document.getElementById('player2').disabled = false;
+        resetGame();
+    });
+
+    grid.addEventListener('click', handleClick);
+    playAgainButton.addEventListener('click', resetGame);
+</script>
+
+</body>
+</html>
